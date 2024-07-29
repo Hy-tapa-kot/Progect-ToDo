@@ -1,6 +1,6 @@
 # React TypeScript Starter Pack
 
-To use this template click `Use this template`
+To use this template click [`Use this template`](https://hy-tapa-kot.github.io/Progect-ToDo/)
 
 ### Available Scripts
 
