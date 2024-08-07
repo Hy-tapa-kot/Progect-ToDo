@@ -32,8 +32,19 @@ export const TodoItem: React.FC<TodoItemProps> = ({
       data-cy="Todo"
       className={`todo ${todo.completed ? 'completed' : ''}`}
     >
+      <label className="todo__status-label">
+        <input
+          data-cy="TodoStatus"
+          type="checkbox"
+          className="todo__status"
+          checked={todo.completed}
+          onChange={() => onToggleTodo(todo)}
+          disabled={loading}
+        />
+      </label>
+
       {editingTodoId === todo.id ? (
-        <form onSubmit={onUpdateTodo}>
+        <form className="todo__edit" onSubmit={onUpdateTodo}>
           <input
             type="text"
             value={editingTodoTitle}
@@ -44,27 +55,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({
                 onCancelEdit();
               }
             }}
-            className="todo__edit"
+            className="todo__title-field"
           />
         </form>
       ) : (
         <>
-          <label
-            className="todo__status-label"
-            htmlFor={`todo-status-${todo.id}`}
-          >
-            11
-            <input
-              id={`todo-status-${todo.id}`}
-              data-cy="TodoStatus"
-              type="checkbox"
-              className="todo__status"
-              checked={todo.completed}
-              onChange={() => onToggleTodo(todo)}
-              disabled={loading}
-            />
-          </label>
-
           <span
             data-cy="TodoTitle"
             className="todo__title"
@@ -83,10 +78,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             ×
           </button>
 
-          <div data-cy="TodoLoader" className="modal overlay">
-            <div className="modal-background has-background-white-ter" />
-            <div className="loader" />
-          </div>
+          {loading && (
+            <div data-cy="TodoLoader" className="modal overlay">
+              <div className="modal-background has-background-white-ter"></div>
+              <div className="loader"></div>
+            </div>
+          )}
         </>
       )}
     </div>
