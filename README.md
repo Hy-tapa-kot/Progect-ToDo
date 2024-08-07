@@ -24,7 +24,7 @@ Configure the following environment parameters before starting, including API ke
 
 Register a user by your email [here](https://mate-academy.github.io/react_student-registration/)
 
-Save the received userId in the api/todos.ts and use it to load todos
+Save the received `userId` in the `api/todos.ts` and use it to load todos
 
 ```
 USER_ID=
