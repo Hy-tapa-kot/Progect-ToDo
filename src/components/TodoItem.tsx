@@ -41,6 +41,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           onChange={() => onToggleTodo(todo)}
           disabled={loading}
         />
+        .
       </label>
 
       {editingTodoId === todo.id ? (
