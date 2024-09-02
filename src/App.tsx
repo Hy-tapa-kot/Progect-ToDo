@@ -21,6 +21,7 @@ export const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
   const [editingTodoTitle, setEditingTodoTitle] = useState<string>('');
+  const [tempTodo, setTempTodo] = useState<Todo | null>(null); // Тимчасовий todo
 
   useEffect(() => {
     if (USER_ID) {
@@ -40,15 +41,26 @@ export const App: React.FC = () => {
       return;
     }
 
+    const tempTodoItem: Todo = {
+      id: 0,
+      userId: USER_ID,
+      title: newTodo,
+      completed: false,
+    };
+
+    setTempTodo(tempTodoItem);
+
     setLoading(true);
 
     createTodo(newTodo)
       .then(newTodoItem => {
         setTodos(prevTodos => [...prevTodos, newTodoItem]);
         setNewTodo('');
+        setTempTodo(null);
       })
       .catch(() => {
         setError('Unable to add a todo');
+        setTempTodo(null);
       })
       .finally(() => setLoading(false));
   };
@@ -184,7 +196,7 @@ export const App: React.FC = () => {
             />
 
             <TodoList
-              todos={todos}
+              todos={tempTodo ? [tempTodo, ...todos] : todos} // Додаємо tempTodo
               filter={filter}
               editingTodoId={editingTodoId}
               editingTodoTitle={editingTodoTitle}
