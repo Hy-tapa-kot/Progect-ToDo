@@ -18,22 +18,19 @@ export const App: React.FC = () => {
   const [newTodo, setNewTodo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const [loading, setLoading] = useState<boolean>(false);
   const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
   const [editingTodoTitle, setEditingTodoTitle] = useState<string>('');
-  const [tempTodo, setTempTodo] = useState<Todo | null>(null); // Тимчасовий todo
+  const [loadingTodos, setLoadingTodos] = useState<number[]>([]);
 
   useEffect(() => {
     if (USER_ID) {
-      setLoading(true);
       getTodos()
         .then(setTodos)
-        .catch(() => setError('Unable to load todos'))
-        .finally(() => setLoading(false));
+        .catch(() => setError('Unable to load todos'));
     }
   }, []);
 
-  const handleAddTodo = (event: React.FormEvent) => {
+  const handleAddTodo = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newTodo.trim()) {
       setError('Title should not be empty');
@@ -44,85 +41,52 @@ export const App: React.FC = () => {
     const tempTodoItem: Todo = {
       id: 0,
       userId: USER_ID,
-      title: newTodo,
+      title: newTodo.trim(),
       completed: false,
     };
 
-    setTempTodo(tempTodoItem);
+    setTodos(prevTodos => [tempTodoItem, ...prevTodos]);
 
-    setLoading(true);
-
-    createTodo(newTodo)
-      .then(newTodoItem => {
-        setTodos(prevTodos => [...prevTodos, newTodoItem]);
-        setNewTodo('');
-        setTempTodo(null);
-      })
-      .catch(() => {
-        setError('Unable to add a todo');
-        setTempTodo(null);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleToggleTodo = (todo: Todo) => {
-    const updatedTodo = { ...todo, completed: !todo.completed };
-
-    setLoading(true);
-
-    updateTodo(todo.id, updatedTodo)
-      .then(() => {
-        setTodos(prevTodos =>
-          prevTodos.map(t => (t.id === todo.id ? updatedTodo : t)),
-        );
-      })
-      .catch(() => {
-        setError('Unable to update a todo');
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleToggleAllTodos = () => {
-    const allCompleted = todos.every(todo => todo.completed);
-    const newStatus = !allCompleted;
-
-    setLoading(true);
-
-    const updatedTodos = todos.map(todo => ({
-      ...todo,
-      completed: newStatus,
-    }));
-
-    Promise.all(
-      updatedTodos.map(todo =>
-        updateTodo(todo.id, todo).catch(() => {
-          setError('Unable to update a todo');
-        }),
-      ),
-    )
-      .then(() => {
-        setTodos(updatedTodos);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleDeleteTodo = (todoId: number) => {
-    const deletedTodo = todos.find(todo => todo.id === todoId);
-
-    if (!deletedTodo) {
-      return;
+    try {
+      const newTodoItem = await createTodo(newTodo.trim());
+      setTodos(prevTodos => [newTodoItem, ...prevTodos.slice(1)]);
+      setNewTodo('');
+    } catch {
+      setError('Unable to add a todo');
+      setTodos(prevTodos => prevTodos.slice(1));
     }
+  };
 
-    setLoading(true);
+  const handleToggleTodo = async (todo: Todo) => {
+    const updatedTodo = { ...todo, completed: !todo.completed };
+    setLoadingTodos(prev => [...prev, todo.id]);
 
-    deleteTodo(todoId)
-      .then(() => {
-        setTodos(prevTodos => prevTodos.filter(todo => todo.id !== todoId));
-      })
-      .catch(() => {
-        setError('Unable to delete a todo');
-      })
-      .finally(() => setLoading(false));
+    try {
+      await updateTodo(todo.id, updatedTodo);
+      setTodos(prevTodos =>
+        prevTodos.map(t => (t.id === todo.id ? updatedTodo : t)),
+      );
+    } catch {
+      setError('Unable to update a todo');
+    } finally {
+      setLoadingTodos(prev => prev.filter(id => id !== todo.id));
+    }
+  };
+
+  const handleDeleteTodo = async (todoId: number) => {
+    const deletedTodo = todos.find(todo => todo.id === todoId);
+    if (!deletedTodo) return;
+
+    setLoadingTodos(prev => [...prev, todoId]);
+
+    try {
+      await deleteTodo(todoId);
+      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== todoId));
+    } catch {
+      setError('Unable to delete a todo');
+    } finally {
+      setLoadingTodos(prev => prev.filter(id => id !== todoId));
+    }
   };
 
   const handleEditTodo = (todo: Todo) => {
@@ -130,52 +94,84 @@ export const App: React.FC = () => {
     setEditingTodoTitle(todo.title);
   };
 
-  const handleUpdateTodo = (event: React.FormEvent) => {
+  const handleUpdateTodo = async (event: React.FormEvent) => {
     event.preventDefault();
     if (editingTodoTitle.trim() === '') {
-      handleDeleteTodo(editingTodoId as number);
-
+      await handleDeleteTodo(editingTodoId as number);
       return;
     }
 
     const updatedTodo = todos.find(todo => todo.id === editingTodoId);
 
-    if (!updatedTodo) {
-      return;
-    }
+    if (!updatedTodo) return;
 
-    if (updatedTodo.title === editingTodoTitle) {
+    if (updatedTodo.title === editingTodoTitle.trim()) {
       setEditingTodoId(null);
 
       return;
     }
 
-    setLoading(true);
+    setLoadingTodos(prev => [...prev, editingTodoId as number]);
 
-    const newTodoo = { ...updatedTodo, title: editingTodoTitle };
-
-    updateTodo(editingTodoId as number, newTodoo)
-      .then(() => {
-        setTodos(prevTodos =>
-          prevTodos.map(todo => (todo.id === editingTodoId ? newTodoo : todo)),
-        );
-        setEditingTodoId(null);
-      })
-      .catch(() => {
-        setError('Unable to update a todo');
-      })
-      .finally(() => setLoading(false));
+    try {
+      await updateTodo(editingTodoId as number, {
+        ...updatedTodo,
+        title: editingTodoTitle.trim(),
+      });
+      setTodos(prevTodos =>
+        prevTodos.map(todo =>
+          todo.id === editingTodoId
+            ? { ...todo, title: editingTodoTitle.trim() }
+            : todo,
+        ),
+      );
+      setEditingTodoId(null);
+    } catch {
+      setError('Unable to update a todo');
+    } finally {
+      setLoadingTodos(prev => prev.filter(id => id !== editingTodoId));
+    }
   };
+  const handleToggleAllTodos = async () => {
+    const allCompleted = todos.every(todo => todo.completed);
+    const newStatus = !allCompleted;
+
+    try {
+      await Promise.all(
+        todos.map(todo =>
+          todo.completed !== newStatus
+            ? updateTodo(todo.id, { ...todo, completed: newStatus })
+            : Promise.resolve(),
+        ),
+      );
+      setTodos(todos.map(todo => ({ ...todo, completed: newStatus })));
+    } catch {
+      setError('Unable to update todos');
+    } finally {
+    }
+  };
+  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
 
   const handleCancelEdit = () => {
     setEditingTodoId(null);
   };
 
-  const handleClearCompleted = () => {
-    setTodos(todos.filter(todo => !todo.completed));
-  };
+  const handleClearCompleted = async () => {
+    const completedTodos = todos.filter(todo => todo.completed);
 
-  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
+    try {
+      await Promise.all(
+        completedTodos.map(todo =>
+          deleteTodo(todo.id).catch(() => {
+            setError('Unable to delete a todo');
+          }),
+        ),
+      );
+      setTodos(todos.filter(todo => !todo.completed));
+    } catch {
+      setError('Unable to delete completed todos');
+    }
+  };
 
   return (
     <div className="todoapp">
@@ -188,7 +184,6 @@ export const App: React.FC = () => {
           <div className="todoapp__content">
             <Header
               newTodo={newTodo}
-              loading={loading}
               onAddTodo={handleAddTodo}
               onNewTodoChange={setNewTodo}
               onToggleAllTodos={handleToggleAllTodos}
@@ -196,11 +191,11 @@ export const App: React.FC = () => {
             />
 
             <TodoList
-              todos={tempTodo ? [tempTodo, ...todos] : todos} // Додаємо tempTodo
+              todos={todos}
               filter={filter}
               editingTodoId={editingTodoId}
               editingTodoTitle={editingTodoTitle}
-              loading={loading}
+              loadingTodos={loadingTodos}
               onToggleTodo={handleToggleTodo}
               onDeleteTodo={handleDeleteTodo}
               onEditTodo={handleEditTodo}

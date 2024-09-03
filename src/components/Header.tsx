@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 interface HeaderProps {
   newTodo: string;
-  loading: boolean;
   onAddTodo: (event: React.FormEvent) => void;
   onNewTodoChange: (title: string) => void;
   onToggleAllTodos: () => void;
@@ -11,7 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   newTodo,
-  loading,
+
   onAddTodo,
   onNewTodoChange,
   onToggleAllTodos,
@@ -41,7 +40,6 @@ export const Header: React.FC<HeaderProps> = ({
           placeholder="What needs to be done?"
           value={newTodo}
           onChange={e => onNewTodoChange(e.target.value)}
-          disabled={loading}
         />
       </form>
     </header>

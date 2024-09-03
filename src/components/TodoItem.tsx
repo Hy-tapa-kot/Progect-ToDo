@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Todo } from '../types/Todo';
 
 interface TodoItemProps {
   todo: Todo;
   editingTodoId: number | null;
   editingTodoTitle: string;
-  loading: boolean;
+  isLoading: boolean;
   onToggleTodo: (todo: Todo) => void;
   onDeleteTodo: (todoId: number) => void;
   onEditTodo: (todo: Todo) => void;
@@ -18,7 +18,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   todo,
   editingTodoId,
   editingTodoTitle,
-  loading,
+  isLoading,
   onToggleTodo,
   onDeleteTodo,
   onEditTodo,
@@ -26,6 +26,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   onEditingTodoTitleChange,
   onCancelEdit,
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTodoId === todo.id && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingTodoId, todo.id]);
+
   return (
     <div
       key={todo.id}
@@ -39,7 +47,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           className="todo__status"
           checked={todo.completed}
           onChange={() => onToggleTodo(todo)}
-          disabled={loading}
+          disabled={isLoading}
         />
         .
       </label>
@@ -57,13 +65,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({
               }
             }}
             className="todo__title-field"
+            ref={inputRef}
+            disabled={isLoading}
           />
         </form>
       ) : (
         <>
           <span
             data-cy="TodoTitle"
-            className="todo__title"
+            className={`todo__title ${isLoading ? 'loading' : ''}`}
             onDoubleClick={() => onEditTodo(todo)}
           >
             {todo.title}
@@ -74,18 +84,18 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             className="todo__remove"
             data-cy="TodoDelete"
             onClick={() => onDeleteTodo(todo.id)}
-            disabled={loading}
+            disabled={isLoading}
           >
             ×
           </button>
-
-          {loading && (
-            <div data-cy="TodoLoader" className="modal overlay">
-              <div className="modal-background has-background-white-ter"></div>
-              <div className="loader"></div>
-            </div>
-          )}
         </>
+      )}
+
+      {isLoading && (
+        <div data-cy="TodoLoader" className="modal overlay is-active">
+          <div className="modal-background has-background-white-ter"></div>
+          <div className="loader"></div>
+        </div>
       )}
     </div>
   );

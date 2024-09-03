@@ -7,7 +7,7 @@ interface TodoListProps {
   filter: 'all' | 'active' | 'completed';
   editingTodoId: number | null;
   editingTodoTitle: string;
-  loading: boolean;
+  loadingTodos: number[];
   onToggleTodo: (todo: Todo) => void;
   onDeleteTodo: (todoId: number) => void;
   onEditTodo: (todo: Todo) => void;
@@ -21,7 +21,7 @@ export const TodoList: React.FC<TodoListProps> = ({
   filter,
   editingTodoId,
   editingTodoTitle,
-  loading,
+  loadingTodos,
   onToggleTodo,
   onDeleteTodo,
   onEditTodo,
@@ -53,7 +53,7 @@ export const TodoList: React.FC<TodoListProps> = ({
           todo={todo}
           editingTodoId={editingTodoId}
           editingTodoTitle={editingTodoTitle}
-          loading={loading}
+          isLoading={loadingTodos.includes(todo.id)}
           onToggleTodo={onToggleTodo}
           onDeleteTodo={onDeleteTodo}
           onEditTodo={onEditTodo}
