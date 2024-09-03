@@ -6,15 +6,16 @@ interface HeaderProps {
   onNewTodoChange: (title: string) => void;
   onToggleAllTodos: () => void;
   allCompleted: boolean;
+  isAddingTodo: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   newTodo,
-
   onAddTodo,
   onNewTodoChange,
   onToggleAllTodos,
   allCompleted,
+  isAddingTodo,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
           placeholder="What needs to be done?"
           value={newTodo}
           onChange={e => onNewTodoChange(e.target.value)}
+          disabled={isAddingTodo}
         />
       </form>
     </header>

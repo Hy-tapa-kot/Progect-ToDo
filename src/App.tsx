@@ -21,6 +21,8 @@ export const App: React.FC = () => {
   const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
   const [editingTodoTitle, setEditingTodoTitle] = useState<string>('');
   const [loadingTodos, setLoadingTodos] = useState<number[]>([]);
+  const [isAddingTodo, setIsAddingTodo] = useState<boolean>(false);
+  const [tempTodoId, setTempTodoId] = useState<number | null>(null); // Тримає ID тимчасового todo
 
   useEffect(() => {
     if (USER_ID) {
@@ -32,6 +34,7 @@ export const App: React.FC = () => {
 
   const handleAddTodo = async (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!newTodo.trim()) {
       setError('Title should not be empty');
 
@@ -39,22 +42,35 @@ export const App: React.FC = () => {
     }
 
     const tempTodoItem: Todo = {
-      id: 0,
+      id: Date.now(), // Використовуємо Date.now() для унікального тимчасового ID
       userId: USER_ID,
       title: newTodo.trim(),
       completed: false,
     };
 
-    setTodos(prevTodos => [tempTodoItem, ...prevTodos]);
+    // Додаємо тимчасовий todo і зберігаємо його ID для відображення лоадера
+    setTodos(prevTodos => [...prevTodos, tempTodoItem]);
+    setIsAddingTodo(true);
+    setTempTodoId(tempTodoItem.id);
 
     try {
       const newTodoItem = await createTodo(newTodo.trim());
 
-      setTodos(prevTodos => [newTodoItem, ...prevTodos.slice(1)]);
+      // Замінюємо тимчасовий todo новим todo з сервера
+      setTodos(prevTodos =>
+        prevTodos.map(todo =>
+          todo.id === tempTodoItem.id ? newTodoItem : todo,
+        ),
+      );
       setNewTodo('');
     } catch {
       setError('Unable to add a todo');
-      setTodos(prevTodos => prevTodos.slice(1));
+      setTodos(prevTodos =>
+        prevTodos.filter(todo => todo.id !== tempTodoItem.id),
+      ); // Видаляємо тимчасовий todo, якщо сталася помилка
+    } finally {
+      setIsAddingTodo(false);
+      setTempTodoId(null); // Скидаємо ID тимчасового todo
     }
   };
 
@@ -101,6 +117,7 @@ export const App: React.FC = () => {
 
   const handleUpdateTodo = async (event: React.FormEvent) => {
     event.preventDefault();
+
     if (editingTodoTitle.trim() === '') {
       await handleDeleteTodo(editingTodoId as number);
 
@@ -126,6 +143,7 @@ export const App: React.FC = () => {
         ...updatedTodo,
         title: editingTodoTitle.trim(),
       });
+
       setTodos(prevTodos =>
         prevTodos.map(todo =>
           todo.id === editingTodoId
@@ -156,7 +174,6 @@ export const App: React.FC = () => {
       setTodos(todos.map(todo => ({ ...todo, completed: newStatus })));
     } catch {
       setError('Unable to update todos');
-    } finally {
     }
   };
 
@@ -198,6 +215,7 @@ export const App: React.FC = () => {
               onNewTodoChange={setNewTodo}
               onToggleAllTodos={handleToggleAllTodos}
               allCompleted={allCompleted}
+              isAddingTodo={isAddingTodo}
             />
 
             <TodoList
@@ -206,6 +224,7 @@ export const App: React.FC = () => {
               editingTodoId={editingTodoId}
               editingTodoTitle={editingTodoTitle}
               loadingTodos={loadingTodos}
+              tempTodoId={tempTodoId}
               onToggleTodo={handleToggleTodo}
               onDeleteTodo={handleDeleteTodo}
               onEditTodo={handleEditTodo}

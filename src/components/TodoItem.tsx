@@ -6,6 +6,7 @@ interface TodoItemProps {
   editingTodoId: number | null;
   editingTodoTitle: string;
   isLoading: boolean;
+  tempTodoId: number | null;
   onToggleTodo: (todo: Todo) => void;
   onDeleteTodo: (todoId: number) => void;
   onEditTodo: (todo: Todo) => void;
@@ -19,6 +20,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   editingTodoId,
   editingTodoTitle,
   isLoading,
+  tempTodoId,
   onToggleTodo,
   onDeleteTodo,
   onEditTodo,
@@ -34,6 +36,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     }
   }, [editingTodoId, todo.id]);
 
+  const isTempTodo = tempTodoId === todo.id;
+
   return (
     <div
       key={todo.id}
@@ -47,7 +51,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           className="todo__status"
           checked={todo.completed}
           onChange={() => onToggleTodo(todo)}
-          disabled={isLoading}
+          disabled={isLoading || isTempTodo}
         />
         .
       </label>
@@ -73,7 +77,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
         <>
           <span
             data-cy="TodoTitle"
-            className={`todo__title ${isLoading ? 'loading' : ''}`}
+            className={`todo__title ${isLoading || isTempTodo ? 'loading' : ''}`}
             onDoubleClick={() => onEditTodo(todo)}
           >
             {todo.title}
@@ -84,14 +88,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             className="todo__remove"
             data-cy="TodoDelete"
             onClick={() => onDeleteTodo(todo.id)}
-            disabled={isLoading}
+            disabled={isLoading || isTempTodo}
           >
             ×
           </button>
         </>
       )}
 
-      {isLoading && (
+      {(isLoading || isTempTodo) && (
         <div data-cy="TodoLoader" className="modal overlay is-active">
           <div className="modal-background has-background-white-ter"></div>
           <div className="loader"></div>
