@@ -49,6 +49,7 @@ export const App: React.FC = () => {
 
     try {
       const newTodoItem = await createTodo(newTodo.trim());
+
       setTodos(prevTodos => [newTodoItem, ...prevTodos.slice(1)]);
       setNewTodo('');
     } catch {
@@ -59,6 +60,7 @@ export const App: React.FC = () => {
 
   const handleToggleTodo = async (todo: Todo) => {
     const updatedTodo = { ...todo, completed: !todo.completed };
+
     setLoadingTodos(prev => [...prev, todo.id]);
 
     try {
@@ -75,6 +77,7 @@ export const App: React.FC = () => {
 
   const handleDeleteTodo = async (todoId: number) => {
     const deletedTodo = todos.find(todo => todo.id === todoId);
+
     if (!deletedTodo) return;
 
     setLoadingTodos(prev => [...prev, todoId]);
@@ -98,6 +101,7 @@ export const App: React.FC = () => {
     event.preventDefault();
     if (editingTodoTitle.trim() === '') {
       await handleDeleteTodo(editingTodoId as number);
+
       return;
     }
 
@@ -132,6 +136,7 @@ export const App: React.FC = () => {
       setLoadingTodos(prev => prev.filter(id => id !== editingTodoId));
     }
   };
+
   const handleToggleAllTodos = async () => {
     const allCompleted = todos.every(todo => todo.completed);
     const newStatus = !allCompleted;
@@ -150,6 +155,7 @@ export const App: React.FC = () => {
     } finally {
     }
   };
+
   const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
 
   const handleCancelEdit = () => {
