@@ -78,7 +78,9 @@ export const App: React.FC = () => {
   const handleDeleteTodo = async (todoId: number) => {
     const deletedTodo = todos.find(todo => todo.id === todoId);
 
-    if (!deletedTodo) return;
+    if (!deletedTodo) {
+      return;
+    }
 
     setLoadingTodos(prev => [...prev, todoId]);
 
@@ -107,7 +109,9 @@ export const App: React.FC = () => {
 
     const updatedTodo = todos.find(todo => todo.id === editingTodoId);
 
-    if (!updatedTodo) return;
+    if (!updatedTodo) {
+      return;
+    }
 
     if (updatedTodo.title === editingTodoTitle.trim()) {
       setEditingTodoId(null);
