@@ -31,40 +31,38 @@ export const TodoList: React.FC<TodoListProps> = ({
   onEditingTodoTitleChange,
   onCancelEdit,
 }) => {
-  const filteredTodos = todos.filter(todo => {
-    if (filter === 'all') {
-      return true;
-    }
-
-    if (filter === 'active') {
-      return !todo.completed;
-    }
-
-    if (filter === 'completed') {
-      return todo.completed;
-    }
-
-    return false;
-  });
-
   return (
     <section className="todoapp__main" data-cy="TodoList">
-      {filteredTodos.map(todo => (
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          editingTodoId={editingTodoId}
-          editingTodoTitle={editingTodoTitle}
-          isLoading={loadingTodos.includes(todo.id) || tempTodoId === todo.id}
-          tempTodoId={tempTodoId}
-          onToggleTodo={onToggleTodo}
-          onDeleteTodo={onDeleteTodo}
-          onEditTodo={onEditTodo}
-          onUpdateTodo={onUpdateTodo}
-          onEditingTodoTitleChange={onEditingTodoTitleChange}
-          onCancelEdit={onCancelEdit}
-        />
-      ))}
+      <ul className="todo-list">
+        {todos
+          .filter(todo => {
+            if (filter === 'active') {
+              return !todo.completed;
+            }
+
+            if (filter === 'completed') {
+              return todo.completed;
+            }
+
+            return true;
+          })
+          .map(todo => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              editingTodoId={editingTodoId}
+              editingTodoTitle={editingTodoTitle}
+              isLoading={loadingTodos.includes(todo.id)}
+              onToggleTodo={onToggleTodo}
+              onDeleteTodo={onDeleteTodo}
+              isTemporary={todo.id === tempTodoId}
+              onEditTodo={onEditTodo}
+              onUpdateTodo={onUpdateTodo}
+              onEditingTodoTitleChange={onEditingTodoTitleChange}
+              onCancelEdit={onCancelEdit}
+            />
+          ))}
+      </ul>
     </section>
   );
 };

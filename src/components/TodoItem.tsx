@@ -6,7 +6,7 @@ interface TodoItemProps {
   editingTodoId: number | null;
   editingTodoTitle: string;
   isLoading: boolean;
-  tempTodoId: number | null;
+  isTemporary: boolean;
   onToggleTodo: (todo: Todo) => void;
   onDeleteTodo: (todoId: number) => void;
   onEditTodo: (todo: Todo) => void;
@@ -20,7 +20,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   editingTodoId,
   editingTodoTitle,
   isLoading,
-  tempTodoId,
+  isTemporary,
   onToggleTodo,
   onDeleteTodo,
   onEditTodo,
@@ -36,13 +36,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     }
   }, [editingTodoId, todo.id]);
 
-  const isTempTodo = tempTodoId === todo.id;
+  const todoLoadingClass = isLoading || isTemporary ? 'loading' : '';
 
   return (
     <div
       key={todo.id}
       data-cy="Todo"
-      className={`todo ${todo.completed ? 'completed' : ''}`}
+      className={`todo ${todo.completed ? 'completed' : ''} ${todoLoadingClass}`}
     >
       <label className="todo__status-label">
         <input
@@ -51,7 +51,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           className="todo__status"
           checked={todo.completed}
           onChange={() => onToggleTodo(todo)}
-          disabled={isLoading || isTempTodo}
+          disabled={isLoading || isTemporary}
         />
         .
       </label>
@@ -70,14 +70,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             }}
             className="todo__title-field"
             ref={inputRef}
-            disabled={isLoading}
+            disabled={isLoading || isTemporary}
           />
         </form>
       ) : (
         <>
           <span
             data-cy="TodoTitle"
-            className={`todo__title ${isLoading || isTempTodo ? 'loading' : ''}`}
+            className={`todo__title ${todoLoadingClass}`}
             onDoubleClick={() => onEditTodo(todo)}
           >
             {todo.title}
@@ -88,14 +88,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             className="todo__remove"
             data-cy="TodoDelete"
             onClick={() => onDeleteTodo(todo.id)}
-            disabled={isLoading || isTempTodo}
+            disabled={isLoading || isTemporary}
           >
             ×
           </button>
         </>
       )}
 
-      {(isLoading || isTempTodo) && (
+      {(isLoading || isTemporary) && (
         <div data-cy="TodoLoader" className="modal overlay is-active">
           <div className="modal-background has-background-white-ter"></div>
           <div className="loader"></div>

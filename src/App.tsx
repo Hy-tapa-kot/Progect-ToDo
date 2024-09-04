@@ -22,7 +22,7 @@ export const App: React.FC = () => {
   const [editingTodoTitle, setEditingTodoTitle] = useState<string>('');
   const [loadingTodos, setLoadingTodos] = useState<number[]>([]);
   const [isAddingTodo, setIsAddingTodo] = useState<boolean>(false);
-  const [tempTodoId, setTempTodoId] = useState<number | null>(null); // Тримає ID тимчасового todo
+  const [tempTodoId, setTempTodoId] = useState<number | null>(null);
 
   useEffect(() => {
     if (USER_ID) {
@@ -42,21 +42,20 @@ export const App: React.FC = () => {
     }
 
     const tempTodoItem: Todo = {
-      id: Date.now(), // Використовуємо Date.now() для унікального тимчасового ID
+      id: Date.now(),
       userId: USER_ID,
       title: newTodo.trim(),
       completed: false,
     };
 
-    // Додаємо тимчасовий todo і зберігаємо його ID для відображення лоадера
     setTodos(prevTodos => [...prevTodos, tempTodoItem]);
+
     setIsAddingTodo(true);
     setTempTodoId(tempTodoItem.id);
 
     try {
       const newTodoItem = await createTodo(newTodo.trim());
 
-      // Замінюємо тимчасовий todo новим todo з сервера
       setTodos(prevTodos =>
         prevTodos.map(todo =>
           todo.id === tempTodoItem.id ? newTodoItem : todo,
@@ -67,10 +66,10 @@ export const App: React.FC = () => {
       setError('Unable to add a todo');
       setTodos(prevTodos =>
         prevTodos.filter(todo => todo.id !== tempTodoItem.id),
-      ); // Видаляємо тимчасовий todo, якщо сталася помилка
+      );
     } finally {
       setIsAddingTodo(false);
-      setTempTodoId(null); // Скидаємо ID тимчасового todo
+      setTempTodoId(null);
     }
   };
 
@@ -163,6 +162,15 @@ export const App: React.FC = () => {
     const allCompleted = todos.every(todo => todo.completed);
     const newStatus = !allCompleted;
 
+    const togglingTodosIds = todos
+      .filter(todo => todo.completed !== newStatus)
+      .map(todo => todo.id);
+
+    setLoadingTodos(prevLoadingTodos => [
+      ...prevLoadingTodos,
+      ...togglingTodosIds,
+    ]);
+
     try {
       await Promise.all(
         todos.map(todo =>
@@ -174,6 +182,36 @@ export const App: React.FC = () => {
       setTodos(todos.map(todo => ({ ...todo, completed: newStatus })));
     } catch {
       setError('Unable to update todos');
+    } finally {
+      setLoadingTodos(prevLoadingTodos =>
+        prevLoadingTodos.filter(id => !togglingTodosIds.includes(id)),
+      );
+    }
+  };
+
+  const handleClearCompleted = async () => {
+    const completedTodos = todos.filter(todo => todo.completed);
+
+    const completedTodoIds = completedTodos.map(todo => todo.id);
+
+    setLoadingTodos(prevLoadingTodos => [
+      ...prevLoadingTodos,
+      ...completedTodoIds,
+    ]);
+
+    try {
+      await Promise.all(
+        completedTodos.map(todo =>
+          deleteTodo(todo.id).catch(() => setError('Unable to delete a todo')),
+        ),
+      );
+      setTodos(todos.filter(todo => !todo.completed));
+    } catch {
+      setError('Unable to delete completed todos');
+    } finally {
+      setLoadingTodos(prevLoadingTodos =>
+        prevLoadingTodos.filter(id => !completedTodoIds.includes(id)),
+      );
     }
   };
 
@@ -181,23 +219,6 @@ export const App: React.FC = () => {
 
   const handleCancelEdit = () => {
     setEditingTodoId(null);
-  };
-
-  const handleClearCompleted = async () => {
-    const completedTodos = todos.filter(todo => todo.completed);
-
-    try {
-      await Promise.all(
-        completedTodos.map(todo =>
-          deleteTodo(todo.id).catch(() => {
-            setError('Unable to delete a todo');
-          }),
-        ),
-      );
-      setTodos(todos.filter(todo => !todo.completed));
-    } catch {
-      setError('Unable to delete completed todos');
-    }
   };
 
   return (
